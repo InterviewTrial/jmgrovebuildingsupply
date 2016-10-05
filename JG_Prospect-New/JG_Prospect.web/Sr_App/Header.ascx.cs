@@ -54,21 +54,21 @@ namespace JG_Prospect.Sr_App
 
         private void BindData()
         {
-            DataSet DS = new DataSet();
+            //DataSet DS = new DataSet();
           
-            DS = InstallUserBLL.Instance.GetAllSalesInstallUsers();          
+            //DS = InstallUserBLL.Instance.GetAllSalesInstallUsers();          
 
-            Session["UserData"] = DS.Tables[0];
+            //Session["UserData"] = DS.Tables[0];
            
-            ddlDesignationSearch.DataSource = ddlDesignation.DataSource=(from ptrade in DS.Tables[0].AsEnumerable()
-                                         where !string.IsNullOrEmpty(ptrade.Field<string>("Designation"))
-                                         select Convert.ToString(ptrade["Designation"])).Distinct().ToList();
+            //ddlDesignationSearch.DataSource = ddlDesignation.DataSource=(from ptrade in DS.Tables[0].AsEnumerable()
+            //                             where !string.IsNullOrEmpty(ptrade.Field<string>("Designation"))
+            //                             select Convert.ToString(ptrade["Designation"])).Distinct().ToList();
 
-            ddlDesignation.DataBind();
-            ddlDesignation.Items.Insert(0, "--Select--");
+            //ddlDesignation.DataBind();
+            //ddlDesignation.Items.Insert(0, "--Select--");
 
-            ddlDesignationSearch.DataBind();
-            ddlDesignationSearch.Items.Insert(0, "--Select--");
+            //ddlDesignationSearch.DataBind();
+            //ddlDesignationSearch.Items.Insert(0, "--Select--");
            
         }
 

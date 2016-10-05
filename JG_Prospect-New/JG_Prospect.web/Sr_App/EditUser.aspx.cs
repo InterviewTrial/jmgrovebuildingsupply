@@ -74,14 +74,14 @@ namespace JG_Prospect
             ddlDesignation.Items.Insert(0, "--Select--");
 
 
-            ddlCreatedBy.DataSource = (from fname in DS.Tables[0].AsEnumerable()
-                                  where !string.IsNullOrEmpty(fname.Field<string>("SourceUser"))
-                                  orderby fname.Field<string>("SourceUser") ascending
-                                  select Convert.ToString(fname["SourceUser"])).Distinct().ToList();
-            ddlCreatedBy.DataBind();
-            ddlCreatedBy.Items.Insert(0, "--Select--");
+            //ddlCreatedBy.DataSource = (from fname in DS.Tables[0].AsEnumerable()
+            //                      where !string.IsNullOrEmpty(fname.Field<string>("SourceUser"))
+            //                      orderby fname.Field<string>("SourceUser") ascending
+            //                      select Convert.ToString(fname["SourceUser"])).Distinct().ToList();
+            //ddlCreatedBy.DataBind();
+            //ddlCreatedBy.Items.Insert(0, "--Select--");
 
-            
+
         }
 
 
@@ -208,8 +208,8 @@ namespace JG_Prospect
                 //}
                 //else if (type == "Sales")
                 //{
-                    string ID = e.CommandArgument.ToString();
-                    Response.Redirect("CreateSalesUser.aspx?id=" + ID);
+                string ID = e.CommandArgument.ToString();
+                Response.Redirect("CreateSalesUser.aspx?id=" + ID);
                 //}
 
             }
@@ -314,6 +314,131 @@ namespace JG_Prospect
             {
 
             }
+        }
+
+        protected void btnUpdateDuplicate_Click(object sender, EventArgs e)
+        {
+            if (ViewState["dtDuplicatedata"] != null)
+            {
+                DataTable dtDuplicatedata = (DataTable)ViewState["dtDuplicatedata"];
+                InstallUserBLL.Instance.InsertBulkUsers(dtDuplicatedata, true);
+            }
+        }
+
+
+        /// <summary>
+        /// Handles the Click event of the btnUploadUser control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e"> The Event <see cref="EventArgs"/> instance containing the event data.</param>
+        protected void btnUploadUser_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (BulkProspectUploader.HasFile)
+                {
+                    string ext = Path.GetExtension(BulkProspectUploader.FileName);
+                    if (ext == ".xls" || ext == ".xlsx")
+                    {
+                        string FileName = Path.GetFileName(BulkProspectUploader.PostedFile.FileName);
+                        string Extension = Path.GetExtension(BulkProspectUploader.PostedFile.FileName);
+                        string FolderPath = ConfigurationManager.AppSettings["FolderPath"];
+                        string FilePath = Server.MapPath(FolderPath + FileName);
+                        BulkProspectUploader.SaveAs(FilePath);
+                        BulkUserEntry(FilePath, Extension);
+                        binddata();
+                    }
+                    else
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "alert", "alert('Select xls or xlsx file')", true);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex; // Error Handling
+            }
+        }
+
+        private void BulkUserEntry(string FilePath, string Extension)
+        {
+            string conStr = "";
+            int count = 0;
+            switch (Extension)
+            {
+                case ".xls": //Excel 97-03
+                    conStr = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FilePath + ";Extended Properties='Excel 8.0;HDR=No;IMEX=1'";
+                    break;
+                case ".xlsx": //Excel 07
+                    conStr = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + FilePath + ";Extended Properties=Excel 12.0;";
+                    break;
+            }
+            conStr = String.Format(conStr, FilePath);
+            OleDbConnection connExcel = new OleDbConnection(conStr);
+            OleDbCommand cmdExcel = new OleDbCommand();
+            OleDbDataAdapter oda = new OleDbDataAdapter();
+            DataTable dtExcel = new DataTable();
+            cmdExcel.Connection = connExcel;
+            //Get the name of First Sheet
+            connExcel.Open();
+            DataTable dtExcelSchema;
+            dtExcelSchema = connExcel.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+            string SheetName = dtExcelSchema.Rows[0]["TABLE_NAME"].ToString();
+            connExcel.Close();
+
+            //Read Data from First Sheet
+            connExcel.Open();
+            cmdExcel.CommandText = "SELECT * From [" + SheetName + "]";
+            oda.SelectCommand = cmdExcel;
+            oda.Fill(dtExcel);
+
+            DataTable dtUserFile = new DataTable();
+            dtUserFile.Columns.Add("FristName");
+            dtUserFile.Columns.Add("LastName");
+            dtUserFile.Columns.Add("Email");
+            dtUserFile.Columns.Add("Designition");
+            dtUserFile.Columns.Add("Source");
+            dtUserFile.Columns.Add("Phone");
+            dtUserFile.Columns.Add("Status");
+
+            for (int i = 0; i < dtExcel.Rows.Count; i++)
+            {
+                try
+                {
+                    dtUserFile.Rows.Add(Convert.ToString(dtExcel.Rows[i][4]).Trim(),
+                        Convert.ToString(dtExcel.Rows[i][5]).Trim(), Convert.ToString(dtExcel.Rows[i][7]).Trim(),
+                        Convert.ToString(dtExcel.Rows[i][1]).Trim(),
+                        Convert.ToString(dtExcel.Rows[i][6]).Trim(), Convert.ToString(dtExcel.Rows[i][8]).Trim(),
+                        Convert.ToString(dtExcel.Rows[i][2]).Trim() == "" ? "applicant" : Convert.ToString(dtExcel.Rows[i][2]).Trim());
+                }
+                catch (Exception ex)
+                {
+                    continue;
+                }
+            }
+
+            if (dtUserFile.Rows.Count > 0)
+            {
+                DataSet dss = InstallUserBLL.Instance.InsertBulkUsers(dtUserFile);
+
+                if (dss.Tables.Count > 0 && dss.Tables[0].Rows.Count > 0)
+                {
+                    grdViewDuplicate.DataSource = dss.Tables[0];
+                    ViewState["dtDuplicatedata"] = dss.Tables[0];
+                    grdViewDuplicate.DataBind();
+                    ModalPopupExtender1.Show();
+                }
+            }
+
+            if (count == 0)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "AlertBox", "alert('Upload file contains data error or matching data exists, please check and upload again');", true);
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "AlertBox", "alert('Prospect Uploaded Successfully');", true);
+            }
+            connExcel.Close();
         }
 
         //private string GetId(string UserType, string UserStatus)
@@ -466,6 +591,7 @@ namespace JG_Prospect
 
 
 
+
         private void Import_To_Grid(string FilePath, string Extension)
         {
             string conStr = "";
@@ -523,11 +649,11 @@ namespace JG_Prospect
                     objuser.Source = Convert.ToString(Session["Username"]);
                     objuser.designation = dtExcel.Rows[i][9].ToString().Trim();
                     objuser.status = dtExcel.Rows[i][10].ToString().Trim();
-                   
+
                     objuser.UserType = "SalesUser";
                     DataSet dsCheckDuplicate = InstallUserBLL.Instance.CheckInstallUser(dtExcel.Rows[i][5].ToString().Trim(), dtExcel.Rows[i][3].ToString().Trim());
                     if (dsCheckDuplicate.Tables[0].Rows.Count == 0) //Original Code .......
-                   // if (dsCheckDuplicate.Tables[0].Rows.Count != 0)
+                    // if (dsCheckDuplicate.Tables[0].Rows.Count != 0)
                     {
                         IdGenerated = GetId(dtExcel.Rows[i][9].ToString().Trim(), dtExcel.Rows[i][10].ToString().Trim());
                         objuser.InstallId = IdGenerated;
@@ -632,7 +758,7 @@ namespace JG_Prospect
                 string HireDate = "";
                 string EmpType = "";
                 string PayRates = "";
-                ds = InstallUserBLL.Instance.ChangeStatus(Convert.ToString(Session["EditStatus"]), Convert.ToInt32(Session["EditId"]),DateTime.Today.ToString("yyyy-MM-dd"), DateTime.Now.ToShortTimeString(), Convert.ToInt32(Session[JG_Prospect.Common.SessionKey.Key.UserId.ToString()]), txtReason.Text);
+                ds = InstallUserBLL.Instance.ChangeStatus(Convert.ToString(Session["EditStatus"]), Convert.ToInt32(Session["EditId"]), DateTime.Today.ToString("yyyy-MM-dd"), DateTime.Now.ToShortTimeString(), Convert.ToInt32(Session[JG_Prospect.Common.SessionKey.Key.UserId.ToString()]), txtReason.Text);
                 if (ds.Tables.Count > 0)
                 {
                     if (ds.Tables[0].Rows.Count > 0)
@@ -749,7 +875,7 @@ namespace JG_Prospect
                 {
                     ds = AdminBLL.Instance.GetEmailTemplate("Admin");
                 }
-                else if(ds.Tables[0].Rows.Count ==0)
+                else if (ds.Tables[0].Rows.Count == 0)
                 {
                     ds = AdminBLL.Instance.GetEmailTemplate("Admin");
                 }
@@ -779,7 +905,7 @@ namespace JG_Prospect
                 //Hi #lblFName#, <br/><br/>You are requested to appear for an interview on #lblDate# - #lblTime#.<br/><br/>Regards,<br/>
                 StringBuilder Body = new StringBuilder();
                 MailMessage Msg = new MailMessage();
-                 //Sender e-mail address.
+                //Sender e-mail address.
                 Msg.From = new MailAddress(userName, "JGrove Construction");
                 // Recipient e-mail address.
                 Msg.To.Add(emailId);
@@ -812,7 +938,7 @@ namespace JG_Prospect
                         Msg.Attachments.Add(attachment);
                     }
                 }
-                  
+
 
                 SmtpClient sc = new SmtpClient(ConfigurationManager.AppSettings["smtpHost"].ToString(), Convert.ToInt32(ConfigurationManager.AppSettings["smtpPort"].ToString()));
 
@@ -834,7 +960,7 @@ namespace JG_Prospect
                 Msg = null;
                 sc.Dispose();
                 sc = null;
-                Page.RegisterStartupScript("UserMsg", "<script>alert('An email notification has sent on "+ emailId +".');}</script>");
+                Page.RegisterStartupScript("UserMsg", "<script>alert('An email notification has sent on " + emailId + ".');}</script>");
             }
             catch (Exception ex)
             {
@@ -1175,11 +1301,11 @@ namespace JG_Prospect
             string EmpType = "";
             string PayRates = "";
 
-            
+
             //string InterviewDate = dtInterviewDate.Text;
             DateTime interviewDate;
             DateTime.TryParse(dtInterviewDate.Text, out interviewDate);
-            if(interviewDate==null)
+            if (interviewDate == null)
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "Overlay", "alert('Invalid Interview Date, Please verify');", true);
                 return;
@@ -1236,12 +1362,12 @@ namespace JG_Prospect
             EnumerableRowCollection<DataRow> query = null;
             if (ddlUserStatus.SelectedIndex != 0 || ddlDesignation.SelectedIndex != 0)
             {
-                string Status = ddlUserStatus.SelectedItem.Value;                    
+                string Status = ddlUserStatus.SelectedItem.Value;
                 query = from userdata in dt.AsEnumerable()
-                        where (userdata.Field<string>("Status") == Status  || ddlUserStatus.SelectedIndex == 0)
+                        where (userdata.Field<string>("Status") == Status || ddlUserStatus.SelectedIndex == 0)
                         && (userdata.Field<string>("Designation") == ddlDesignation.SelectedItem.Text || ddlDesignation.SelectedIndex == 0)
-                           && (userdata.Field<string>("SourceUser") == ddlCreatedBy .SelectedItem.Text || ddlCreatedBy.SelectedIndex == 0)
-                                && (userdata.Field<string>("DateSourced") == txtCreationDate.Text || txtCreationDate.Text == string.Empty )
+                           && (userdata.Field<string>("SourceUser") == ddlCreatedBy.SelectedItem.Text || ddlCreatedBy.SelectedIndex == 0)
+                                && (userdata.Field<string>("DateSourced") == txtCreationDate.Text || txtCreationDate.Text == string.Empty)
                                     && (userdata.Field<string>("FristName") == txtUserSearch.Text || txtUserSearch.Text == string.Empty)
                         select userdata;
                 if (query.Count() > 0)
@@ -1255,7 +1381,7 @@ namespace JG_Prospect
             GridViewUser.DataBind();
         }
 
-      
+
         protected void txtCreationDate_TextChanged(object sender, EventArgs e)
         {
             BindGrid();
@@ -1278,7 +1404,7 @@ namespace JG_Prospect
                     conn.Open();
                     List<string> Users = new List<string>();
 
-                  
+
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
                         while (sdr.Read())
@@ -1301,7 +1427,12 @@ namespace JG_Prospect
         {
             BindGrid();
         }
+
+        protected void ddlUserStatus_SelectedIndexChanged1(object sender, EventArgs e)
+        {
+            BindGrid();
+        }
     }
 
-   
+
 }

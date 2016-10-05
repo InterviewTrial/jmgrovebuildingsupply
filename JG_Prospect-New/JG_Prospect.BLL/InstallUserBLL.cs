@@ -440,5 +440,10 @@ namespace JG_Prospect.BLL
         {
             InstallUserDAL.Instance.ChangeStatusToInterviewDate(Status, StatusId, RejectionDate, RejectionTime, RejectedUserId, time, StatusReason);
         }
+
+        public DataSet InsertBulkUsers(DataTable tableUser, bool needtoEnterDuplicate = false)
+        {
+            return InstallUserDAL.Instance.InsertUsers(tableUser, needtoEnterDuplicate);
+        }
     }
 }

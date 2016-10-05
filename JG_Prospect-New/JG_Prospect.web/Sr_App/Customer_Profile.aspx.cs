@@ -963,7 +963,7 @@ namespace JG_Prospect.Sr_App
         [WebMethod]
         public static string CheckDuplicateCustomerCredentials(String pValueForValidation, Int32 pValidationType)
         {
-            return new_customerBLL.Instance.CheckDuplicateCustomerCredentials(pValueForValidation, pValidationType, Convert.ToInt32(HttpContext.Current.Session["CustomerId"].ToString()));
+            return null; // new_customerBLL.Instance.CheckDuplicateCustomerCredentials(pValueForValidation, pValidationType, Convert.ToInt32(HttpContext.Current.Session["CustomerId"].ToString()));
         }
         [System.Web.Services.WebMethodAttribute(), System.Web.Script.Services.ScriptMethodAttribute()]
         public static string CheckForDuplication(List<NameValue> formVars)

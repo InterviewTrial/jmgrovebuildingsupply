@@ -40,7 +40,7 @@ namespace JG_Prospect.DAL
                     database.AddInParameter(command, "@LastName", DbType.String, objuser.lastname);
                     database.AddInParameter(command, "@Email", DbType.String, objuser.email);
                     database.AddInParameter(command, "@phone", DbType.String, objuser.phone);
-                    database.AddInParameter(command, "@phonetype", DbType.String, objuser.phonetype );
+                    database.AddInParameter(command, "@phonetype", DbType.String, objuser.phonetype);
                     database.AddInParameter(command, "@Address", DbType.String, objuser.address);
                     database.AddInParameter(command, "@Zip", DbType.String, objuser.zip);
                     database.AddInParameter(command, "@State", DbType.String, objuser.state);
@@ -1163,9 +1163,9 @@ namespace JG_Prospect.DAL
                 SqlDatabase database = MSSQLDataBase.Instance.GetDefaultDatabase();
                 {
 
-                   // DbCommand command = database.GetStoredProcCommand("[jgrov_User].[ExportAllInstallUsersData]");
+                    // DbCommand command = database.GetStoredProcCommand("[jgrov_User].[ExportAllInstallUsersData]");
                     DbCommand command = database.GetStoredProcCommand("ExportAllInstallUsersData");
-                    
+
                     command.CommandType = CommandType.StoredProcedure;
                     returndata = database.ExecuteDataSet(command);
 
@@ -1598,6 +1598,29 @@ namespace JG_Prospect.DAL
             }
 
         }
+
+        public DataSet InsertUsers(DataTable tableUser, bool needtoEnterDuplicate)
+        {
+            returndata = new DataSet();
+            try
+            {
+                SqlDatabase database = MSSQLDataBase.Instance.GetDefaultDatabase();
+                {
+                    DbCommand command = database.GetStoredProcCommand("InsertBulkUsers");
+                    command.CommandType = CommandType.StoredProcedure;
+                    database.AddInParameter(command, "@tblUsers", SqlDbType.Structured, tableUser);
+                    database.AddInParameter(command, "@needtoEnterDuplicate", SqlDbType.Bit, needtoEnterDuplicate);
+                    returndata = database.ExecuteDataSet(command);
+                    return returndata;
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return returndata;
+        }
+
 
         public bool ChangeInstallerPassword(int loginid, string password)
         {

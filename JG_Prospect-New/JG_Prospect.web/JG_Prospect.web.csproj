@@ -14,7 +14,7 @@
     <RootNamespace>JG_Prospect</RootNamespace>
     <AssemblyName>JG_Prospect</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <UseIISExpress>False</UseIISExpress>
+    <UseIISExpress>false</UseIISExpress>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -527,7 +527,6 @@
     <Content Include="Sr_App\GoogleCalendarView.aspx" />
     <Content Include="Sr_App\Gutter.aspx" />
     <Content Include="Sr_App\Gutter_Guards.aspx" />
-    <Content Include="Sr_App\HRReports.aspx" />
     <Content Include="Sr_App\img\black-astrek.png" />
     <Content Include="Sr_App\img\dark-blue-astrek.png" />
     <Content Include="Sr_App\img\Email art header.png" />
@@ -1109,13 +1108,6 @@
     </Compile>
     <Compile Include="Sr_App\Gutter_Guards.aspx.designer.cs">
       <DependentUpon>Gutter_Guards.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Sr_App\HRReports.aspx.cs">
-      <DependentUpon>HRReports.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Sr_App\HRReports.aspx.designer.cs">
-      <DependentUpon>HRReports.aspx</DependentUpon>
     </Compile>
     <Compile Include="Sr_App\InstallCreateProspect.aspx.cs">
       <DependentUpon>InstallCreateProspect.aspx</DependentUpon>

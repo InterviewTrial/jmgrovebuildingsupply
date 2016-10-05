@@ -311,7 +311,7 @@ namespace JG_Prospect.Sr_App
             DateTime toDate = Convert.ToDateTime(txtDtToFilter.Text, JG_Prospect.Common.JGConstant.CULTURE);
             if (fromDate < toDate)
             {
-                DataSet ds = InstallUserBLL.Instance.FilteHrData(fromDate, toDate, ddldesignation.SelectedValue, ddlStatus.SelectedValue);
+                DataSet ds = null; // InstallUserBLL.Instance.FilteHrData(fromDate, toDate, ddldesignation.SelectedValue, ddlStatus.SelectedValue);
                 if (ds.Tables.Count > 0)
                 {
                     DataTable dtHrFilterData = ds.Tables[0];
@@ -327,7 +327,8 @@ namespace JG_Prospect.Sr_App
                     }
                 }
             }
-            else {
+            else
+            {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('To date should be Greater than from Date');", true);
             }
         }
@@ -343,23 +344,23 @@ namespace JG_Prospect.Sr_App
         }
 
         public void GetActiveUsers()
-        { 
+        {
             DataSet ds = InstallUserBLL.Instance.GetActiveUsers();
-                if (ds.Tables.Count > 0)
+            if (ds.Tables.Count > 0)
+            {
+                DataTable dtActiveUser = ds.Tables[0];
+                if (dtActiveUser.Rows.Count > 0)
                 {
-                    DataTable dtActiveUser = ds.Tables[0];
-                    if (dtActiveUser.Rows.Count > 0)
-                    {
-                        grdActiveUser.DataSource = dtActiveUser;
-                        grdActiveUser.DataBind();
-                    }
-                    else
-                    {
-                        grdActiveUser.DataSource = new List<string>();
-                        grdActiveUser.DataBind();
-                    }
+                    grdActiveUser.DataSource = dtActiveUser;
+                    grdActiveUser.DataBind();
                 }
-        
+                else
+                {
+                    grdActiveUser.DataSource = new List<string>();
+                    grdActiveUser.DataBind();
+                }
+            }
+
         }
 
         public void GetActiveContractors()
